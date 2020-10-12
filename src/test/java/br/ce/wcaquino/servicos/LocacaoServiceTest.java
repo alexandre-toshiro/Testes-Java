@@ -23,7 +23,8 @@ public class LocacaoServiceTest {
 		Locacao locacao = service.alugarFilme(usuario, filme);
 
 		// verificacao
-		Assert.assertTrue(locacao.getValor() == 5.0);
+		//(1º-valor esperado, 2º Valor recebido)
+		Assert.assertEquals(5.0, locacao.getValor() ,0.01);
 		Assert.assertTrue(DataUtils.isMesmaData(locacao.getDataLocacao(), new Date()));
 		Assert.assertTrue(DataUtils.isMesmaData(locacao.getDataRetorno(), DataUtils.obterDataComDiferencaDias(1)));
 	}
