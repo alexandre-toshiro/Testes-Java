@@ -6,9 +6,11 @@ import static org.junit.Assert.assertThat;
 
 import java.util.Date;
 
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
+import org.junit.rules.ExpectedException;
 
 import br.ce.wcaquino.entidades.Filme;
 import br.ce.wcaquino.entidades.Locacao;
@@ -16,12 +18,15 @@ import br.ce.wcaquino.entidades.Usuario;
 import br.ce.wcaquino.utils.DataUtils;
 
 public class LocacaoServiceTest {
-	
+
 	@Rule
 	public ErrorCollector error = new ErrorCollector();
+	
+	@Rule
+	public ExpectedException exception = ExpectedException.none();
 
 	@Test
-	public void testeLocacao() {
+	public void testeLocacao() throws Exception {// proprio junit gerencia a exceção
 		// cenario
 		LocacaoService service = new LocacaoService();
 		Usuario usuario = new Usuario("Usuario 1");
@@ -29,19 +34,53 @@ public class LocacaoServiceTest {
 
 		// acao
 		Locacao locacao = service.alugarFilme(usuario, filme);
-
 		// verificacao
-		//(1º-valor esperado, 2º Valor recebido)
-		error.checkThat(locacao.getValor() ,is(equalTo(5.0)));
+		// (1º-valor esperado, 2º Valor recebido)
+		error.checkThat(locacao.getValor(), is(equalTo(5.0)));
 		error.checkThat(DataUtils.isMesmaData(locacao.getDataLocacao(), new Date()), is(true));
-		error.checkThat(DataUtils.isMesmaData(locacao.getDataRetorno(), DataUtils.obterDataComDiferencaDias(1)), is(true));
+		error.checkThat(DataUtils.isMesmaData(locacao.getDataRetorno(), DataUtils.obterDataComDiferencaDias(1)),
+				is(true));
+
+	}
+
+	@Test(expected = Exception.class)//1º forma - Diz que há uma exceção esperada(elegante)
+	public void testLocacao_filmeSemEstoque() throws Exception {
+		// cenario
+		LocacaoService service = new LocacaoService();
+		Usuario usuario = new Usuario("Usuario 1");
+		Filme filme = new Filme("Filme 1", 0, 5.0);
+
+		// acao
+		service.alugarFilme(usuario, filme);
+	}
+	
+	@Test//2º forma mais robusto, temos mais controle sobre o código
+	public void testLocacao_filmeSemEstoque2()  {
+		// cenario
+		LocacaoService service = new LocacaoService();
+		Usuario usuario = new Usuario("Usuario 1");
+		Filme filme = new Filme("Filme 1", 0, 5.0);
+
+		// acao
+		try {
+			service.alugarFilme(usuario, filme);
+			Assert.fail("Deveria ter lançado uma exceção");// quando necessariamente precisa vir uma exceção
+		} catch (Exception e) {			
+			assertThat(e.getMessage(), is("Filme sem estoque"));
+		}
+	}
+	@Test// 3º forma define que devemos informar a exceção dentro do cenário
+	public void testLocacao_filmeSemEstoque3() throws Exception {
+		// cenario
+		LocacaoService service = new LocacaoService();
+		Usuario usuario = new Usuario("Usuario 1");
+		Filme filme = new Filme("Filme 1", 0, 5.0);
 		
-		/*
-		 * Existem diversas formas de lidar com testes, algumas pessoas defendem que cada assert deverá estar em uma classe diferente, já que quando colocamos todos em uma só, como agora, 
-		 * é apenas sinalizado o 1º erro, caso tenham outros, só serão mostrado após a sua correção e assim sucessivamente. Só que ao utilizar essa estratégias, sserão geradas diversas classes para cada teste.
-		 * Aqui iremos utilizar a classe ErrorCollector, que irá sinalizar todos os erros de uma só vez e irá também informar aonde estão esses erros, para que assim possamos verificar vários erros dentro da mesma classe.
-		 * Cada estratégia possui seus prós e contras, devendo ser analizado caso a caso.
-		 * */
+		exception.expect(Exception.class);
+		exception.expectMessage("Filme sem estoque");
+
+		// acao
+		service.alugarFilme(usuario, filme);
 	}
 
 }
